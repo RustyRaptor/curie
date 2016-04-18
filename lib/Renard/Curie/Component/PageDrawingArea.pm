@@ -323,6 +323,31 @@ method on_draw_page_cb( (InstanceOf['Cairo::Context']) $cr ) {
 
 	$self->builder->get_object('page-number-entry')
 		->set_text($self->current_page_number);
+
+	$self->on_draw_page_show_text_bbox_cb( $cr );
+}
+
+method on_draw_page_show_text_bbox_cb( (InstanceOf['Cairo::Context']) $cr ) {
+	use Renard::Curie::Data::PDF;
+	use Data::DPath qw(dpathi);
+
+	my $stext = Renard::Curie::Data::PDF::get_mutool_text_stext_xml(
+		$self->document->filename,
+		$self->current_page_number );
+
+	my $root = dpathi($stext);
+	my $char_iterator = $root->isearch( '/page/*/block/*/line/*/span/*/char/*' );
+	while( $char_iterator->isnt_exhausted ) {
+		my $char_hash = $char_iterator->value->deref;
+		my $bbox = [ split ' ', $char_hash->{bbox} ];
+		$cr->rectangle( $bbox->[0], $bbox->[1],
+			$bbox->[2] - $bbox->[0],
+			$bbox->[3] - $bbox->[1],
+		);
+		$cr->set_line_width(0.5);
+		$cr->set_source_rgb(1, 0, 0);
+		$cr->stroke;
+	}
 }
 
 =begin comment
