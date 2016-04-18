@@ -344,8 +344,10 @@ method on_draw_page_show_text_bbox_cb( (InstanceOf['Cairo::Context']) $cr ) {
 			$bbox->[2] - $bbox->[0],
 			$bbox->[3] - $bbox->[1],
 		);
-		$cr->set_line_width(0.5);
-		$cr->set_source_rgb(1, 0, 0);
+		$cr->set_line_width(0.1);
+		$cr->set_source_rgba(1, 0, 0, 0.2);
+		$cr->fill_preserve;
+		$cr->set_source_rgba(0, 0, 1, 1);
 		$cr->stroke;
 	}
 }
