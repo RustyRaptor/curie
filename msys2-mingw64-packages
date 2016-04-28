@@ -4,3 +4,4 @@ mingw-w64-x86_64-cairo
 mingw-w64-x86_64-gtk3
 mingw-w64-x86_64-expat
 mingw-w64-x86_64-openssl
+mingw-w64-x86_64-clutter-gtk

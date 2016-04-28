@@ -4,3 +4,4 @@ gobject-introspection
 libgtk-3-dev
 gir1.2-gdl-3
 libexpat1-dev
+gir1.2-gtkclutter-1.0
