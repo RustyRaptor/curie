@@ -12,18 +12,16 @@ has filename => ( is => 'rw' );
 has page_number => ( is => 'rw' );
 has clutter_gtk_embed => ( is => 'lazy' );
 
-sub _build_clutter_gtk_embed {
+method _build_clutter_gtk_embed {
 	Gtk3::Clutter::Embed->new;
 }
 
-sub FOREIGNBUILDARGS {
+classmethod FOREIGNBUILDARGS(@) {
 	my ($class, %args) = @_;
 	return ();
 }
 
-sub BUILD {
-	my ($self) = @_;
-
+method BUILD {
 	my $stage = $self->clutter_gtk_embed->get_stage;
 
 	my $stext = Renard::Curie::Data::PDF::get_mutool_text_stext_xml(
