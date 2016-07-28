@@ -331,6 +331,7 @@ method on_draw_page_show_text_bbox_cb( (InstanceOf['Cairo::Context']) $cr ) {
 	use Renard::Curie::Data::PDF;
 	use Data::DPath qw(dpathi);
 
+	return if $self->document->can('filename');
 	my $stext = Renard::Curie::Data::PDF::get_mutool_text_stext_xml(
 		$self->document->filename,
 		$self->current_page_number );
