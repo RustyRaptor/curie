@@ -1,4 +1,4 @@
-use Modern::Perl;
+use Renard::Curie::Setup;
 package Renard::Curie::Component::PageTextArea;
 
 use Moo;
@@ -7,6 +7,7 @@ use Glib::Object::Subclass 'Gtk3::Bin';
 
 use Renard::Curie::Data::PDF;
 use Data::DPath qw(dpathi);
+use Function::Parameters;
 
 has filename => ( is => 'rw' );
 has page_number => ( is => 'rw' );
@@ -17,7 +18,6 @@ method _build_clutter_gtk_embed {
 }
 
 classmethod FOREIGNBUILDARGS(@) {
-	my ($class, %args) = @_;
 	return ();
 }
 
@@ -42,7 +42,7 @@ method BUILD {
 		$actor->set_reactive(TRUE);
 		$actor->set_position( $bbox->[0], $bbox->[1] );
 		$actor->set_size( $bbox->[2] - $bbox->[0], $bbox->[3] - $bbox->[1] );
-		#$actor->set_background_color(Clutter::Color::get_static('sky-blue-light'));
+		$actor->set_background_color(Clutter::Color::get_static('sky-blue-light'));
 		$group->add_child( $actor );
 	}
 	$stage->add_child( $group );

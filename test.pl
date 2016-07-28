@@ -1,8 +1,9 @@
 #!/usr/bin/env perl
 
-use Modern::Perl;
 use Gtk3;
 use lib 'lib';
+use Renard::Curie::Setup;
+use Function::Parameters;
 use Renard::Curie::Component::PageTextArea;
 
 sub init {
