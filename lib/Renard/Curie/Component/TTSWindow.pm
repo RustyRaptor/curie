@@ -77,13 +77,14 @@ method update() {
 			args => [
 				$self->synth_param,
 				$current_sentence_text
-			]
-		)->on_done(sub {
-			Glib::Timeout->add(0, sub {
-				$self->choose_next_sentence;
-				return 0;
-			});
-		})->get;
+			],
+			on_result => sub {
+				Glib::Timeout->add(0, sub {
+					$self->choose_next_sentence;
+					return 0;
+				});
+			},
+		);
 	}
 }
 
