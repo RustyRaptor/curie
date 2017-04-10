@@ -9,6 +9,8 @@ use Type::Library 0.008 -base,
 		PageNumber
 		LaxPageNumber
 		ZoomLevel
+		GraphicsSpaceCoordinates
+		PageSpaceCoordinates
 		SizeRequest
 	)];
 use Type::Utils -all;
@@ -16,8 +18,10 @@ use Type::Utils -all;
 # Listed here so that scan-perl-deps can find them
 use Types::Path::Tiny      ();
 use Types::URI             ();
-use Types::Standard        qw(Tuple);
-use Types::Common::Numeric qw(PositiveInt PositiveOrZeroInt PositiveNum);
+use Types::Standard        qw(Tuple StrictNum);
+use Types::Common::Numeric qw(
+	PositiveInt PositiveOrZeroInt
+	PositiveNum PositiveOrZeroNum);
 
 use Type::Libraries;
 Type::Libraries->setup_class(
@@ -91,6 +95,25 @@ The amount to zoom in on a page. This is a multiplier such that
 
 =cut
 declare "ZoomLevel", parent => PositiveNum;
+
+=type GraphicsSpaceCoordinates
+
+A tuple for coordinates that represent a point on a graphics display that
+supports floating point and negative values (such as those in vector graphics).
+
+=cut
+declare "GraphicsSpaceCoordinates",
+	parent => Tuple[StrictNum,StrictNum];
+
+=type PageSpaceCoordinates
+
+A tuple for coordinates that represent a point on a page where floating values
+are allowed, the point (0,0) is the the top-left, and negative coordinates are
+disallowed.
+
+=cut
+declare "PageSpaceCoordinates",
+	parent => Tuple[PositiveOrZeroNum,PositiveOrZeroNum];
 
 =type SizeRequest
 
