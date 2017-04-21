@@ -115,22 +115,22 @@ method BUILD(@) {
 	$self->setup_keybindings;
 	$self->setup_scroll_bindings;
 
-	$self->drawing_area->set_events( ${ Gtk3::Gdk::EventMask->new( 'pointer-motion-mask' ) } );
-	$self->drawing_area
-		->signal_connect( 'motion-notify-event' => sub {
-			my ($widget, $event) = @_;
+	#$self->drawing_area->set_events( ${ Gtk3::Gdk::EventMask->new( 'pointer-motion-mask' ) } );
+	#$self->drawing_area
+		#->signal_connect( 'motion-notify-event' => sub {
+			#my ($widget, $event) = @_;
 
-			my $global = Renard::Curie::Model::Location::Global->new(
-				coordinates => [ $event->get_coords ],
-			);
-			$global_coords = $global;
+			#my $global = Renard::Curie::Model::Location::Global->new(
+				#coordinates => [ $event->get_coords ],
+			#);
+			#$global_coords = $global;
 
-			require 'DDP.pm'; DDP::p($global_coords);#DEBUG
+			#require 'DDP.pm'; DDP::p($global_coords);#DEBUG
 
-			$widget->queue_draw;
+			#$widget->queue_draw;
 
-			return FALSE;
-		});
+			#return FALSE;
+		#});
 
 	# add as child for this L<Gtk3::Bin>
 	$self->add(
@@ -402,11 +402,11 @@ method on_draw_page_cb( (InstanceOf['Cairo::Context']) $cr ) {
 	#$cr->set_source_surface($img, ($widget->get_allocated_width -
 		#$rp->width) / 2, 0);
 
-	if( $global_coords ) {
-		$cr->set_source_rgba(1, 0, 1, 0.1);
-		$cr->rectangle(0, 0, $global_coords->coordinates->[0], $global_coords->coordinates->[1]);
-		$cr->fill;
-	}
+	#if( $global_coords ) {
+		#$cr->set_source_rgba(1, 0, 1, 0.1);
+		#$cr->rectangle(0, 0, $global_coords->coordinates->[0], $global_coords->coordinates->[1]);
+		#$cr->fill;
+	#}
 
 	$self->builder->get_object('page-number-entry')
 		->set_text($self->view->page_number);
