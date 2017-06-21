@@ -1,9 +1,11 @@
 use Renard::Curie::Setup;
-package Renard::Curie::Model::Location::Page;
-# ABSTRACT: Represents a location in page coordinates
+package Renard::Curie::Model::Geometry::Position::Page;
+# ABSTRACT: Represents a position in page coordinates
 
 use Moo;
 use Renard::Curie::Types qw(PageNumber PageSpaceCoordinates);
+
+extends q(Renard::Curie::Model::Geometry::Position);
 
 =attr page
 

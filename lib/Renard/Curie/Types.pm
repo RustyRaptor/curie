@@ -11,6 +11,7 @@ use Type::Library 0.008 -base,
 		ZoomLevel
 		GraphicsSpaceCoordinates
 		PageSpaceCoordinates
+		Length
 		SizeRequest
 	)];
 use Type::Utils -all;
@@ -114,6 +115,14 @@ disallowed.
 =cut
 declare "PageSpaceCoordinates",
 	parent => Tuple[PositiveOrZeroNum,PositiveOrZeroNum];
+
+=type Length
+
+A number that represents a length in geometrical space.
+
+=cut
+declare "Length",
+	parent => PositiveNum;
 
 =type SizeRequest
 
