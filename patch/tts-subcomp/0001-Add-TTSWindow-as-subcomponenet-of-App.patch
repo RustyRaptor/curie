@@ -1,0 +1,70 @@
+From f31a3ec1d150924d235682f37349e2754d96cd61 Mon Sep 17 00:00:00 2001
+From: Zakariyya Mughal <zaki.mughal@gmail.com>
+Date: Fri, 21 Jul 2017 21:15:15 -0500
+Subject: [PATCH 1/4] Add TTSWindow as subcomponenet of App
+
+---
+ lib/Renard/Curie/App.pm | 14 ++++++++++++++
+ 1 file changed, 14 insertions(+)
+
+diff --git a/lib/Renard/Curie/App.pm b/lib/Renard/Curie/App.pm
+index 928432e..4020c1c 100644
+--- a/lib/Renard/Curie/App.pm
++++ b/lib/Renard/Curie/App.pm
+@@ -19,11 +19,14 @@ use Renard::Curie::Component::MenuBar;
+ use Renard::Curie::Component::LogWindow;
+ use Renard::Curie::Component::FileChooser;
+ use Renard::Curie::Component::AccelMap;
++use Renard::Curie::Component::TTSWindow;
+ 
+ use Log::Any::Adapter;
+ use MooX::Role::Logger ();
+ use Getopt::Long::Descriptive;
+ 
++use IO::Async::Loop::Glib;
++
+ use Renard::Curie::Types qw(InstanceOf Path Str DocumentModel);
+ use Function::Parameters;
+ 
+@@ -106,6 +109,11 @@ has content_box => (
+ 	isa => InstanceOf['Gtk3::Box'],
+ );
+ 
++has tts_window => (
++	is => 'rw',
++	isa => InstanceOf['Renard::Curie::Component::TTSWindow'],
++);
++
+ =classmethod setup_gtk
+ 
+   classmethod setup_gtk()
+@@ -157,6 +165,10 @@ method setup_window() {
+ 	$self->log_window( $log_win );
+ 
+ 	Renard::Curie::Component::AccelMap->new( app => $self );
++
++	$self->tts_window( Renard::Curie::Component::TTSWindow->new(
++		app => $self,
++	));
+ }
+ 
+ =method setup_dnd
+@@ -188,6 +200,7 @@ Displays L</window> and starts the L<Gtk3> event loop.
+ method run() {
+ 	$self->window->show_all;
+ 	$self->_logger->info("starting the Gtk main event loop");
++	IO::Async::Loop::Glib->new;
+ 	Gtk3::main;
+ }
+ 
+@@ -308,6 +321,7 @@ method open_document( (DocumentModel) $doc ) {
+ 	}
+ 	my $pd = Renard::Curie::Component::PageDrawingArea->new(
+ 		document => $doc,
++		app => $self,
+ 	);
+ 	$self->outline->update( $doc );
+ 	$self->page_document_component($pd);
+-- 
+2.11.0
+

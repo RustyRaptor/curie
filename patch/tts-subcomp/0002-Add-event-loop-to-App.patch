@@ -1,0 +1,37 @@
+From dfc2650063abae4496c454ca677e16b0ac6fe3d1 Mon Sep 17 00:00:00 2001
+From: Zakariyya Mughal <zaki.mughal@gmail.com>
+Date: Fri, 21 Jul 2017 21:17:53 -0500
+Subject: [PATCH 2/4] Add event loop to App
+
+---
+ lib/Renard/Curie/App.pm | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/lib/Renard/Curie/App.pm b/lib/Renard/Curie/App.pm
+index 4020c1c..0cfb987 100644
+--- a/lib/Renard/Curie/App.pm
++++ b/lib/Renard/Curie/App.pm
+@@ -114,6 +114,12 @@ has tts_window => (
+ 	isa => InstanceOf['Renard::Curie::Component::TTSWindow'],
+ );
+ 
++has loop => ( is => 'lazy' );
++
++sub _build_loop {
++	IO::Async::Loop::Glib->new;
++}
++
+ =classmethod setup_gtk
+ 
+   classmethod setup_gtk()
+@@ -200,7 +206,6 @@ Displays L</window> and starts the L<Gtk3> event loop.
+ method run() {
+ 	$self->window->show_all;
+ 	$self->_logger->info("starting the Gtk main event loop");
+-	IO::Async::Loop::Glib->new;
+ 	Gtk3::main;
+ }
+ 
+-- 
+2.11.0
+
