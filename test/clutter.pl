@@ -3,6 +3,7 @@
 
 
 use Modern::Perl;
+use Glib qw(TRUE FALSE);
 use Gtk3;
 use Clutter;
 use Glib::Object::Introspection;
@@ -58,10 +59,43 @@ sub main {
 
 	my $stage = $embed->get_stage;
 	$pages_group->set_property( 'background-color', Clutter::Color->new(0, 255, 0, 255) );
-	$stage->add_child( $pages_group );
+	my $scroll_actor = Clutter::ScrollActor->new;
+	$scroll_actor->signal_connect( 'notify::allocation' => sub {
+		use DDP; &p( [ $scroll_actor->get_size ] );
+		my ($width, $height) = $scroll_actor->get_size;
+
+		$scrolled_win->get_hadjustment->set_lower(0);
+		$scrolled_win->get_hadjustment->set_upper($width);
+
+		$scrolled_win->get_vadjustment->set_lower(0);
+		$scrolled_win->get_vadjustment->set_upper($height);
+	});
+
+	$scroll_actor->add_child( $pages_group );
+
+	$stage->add_child( $scroll_actor );
+
+	$stage->set_content_gravity('top');
+
 	#$stage->add_child( Clutter::Text->new_with_text("Sans 24", "A bit of text") );
 
 	$window->show_all;
+
+	#require Carp::REPL; Carp::REPL->import('repl'); repl();#DEBUG
+	#Glib::Timeout->add(1000, sub {
+		#use DDP; &p( [ $stage->get_size ] );
+		#use DDP; &p( [ $scroll_actor->get_size ] );
+		#use DDP; &p( [ $pages_group->get_size ] );
+	#});
+
+	Glib::Timeout->add(1000, sub {
+		my @adj = ( $scrolled_win->get_hadjustment, $scrolled_win->get_vadjustment );
+		for my $adj (@adj) {
+			say sprintf("[ %f, %f ]", $adj->get_lower, $adj->get_upper);
+		}
+
+		return TRUE;
+	});
 
 	Gtk3::main;
 }
@@ -69,11 +103,13 @@ sub main {
 sub setup_actors {
 	my ($doc) = @_;
 	my $grid_layout = Clutter::GridLayout->new;
+	$grid_layout->set_row_spacing(10);
+	$grid_layout->set_column_spacing(10);
 
 	my $pages_group = Clutter::Actor->new;
 	$pages_group->set_layout_manager( $grid_layout );
 
-	for my $page_number (1..2) {
+	for my $page_number (1..10) {
 		my $render_group = Clutter::Actor->new;
 
 		my $page_group = Clutter::Actor->new;
@@ -88,7 +124,7 @@ sub setup_actors {
 
 			my $clutter_image = Clutter::Image::new();
 			$clutter_image->set_bytes(
-				Glib::Bytes->new($pixbuf->read_pixels),
+				Glib::Bytes->new($pixbuf->get_pixels),
 				$pixbuf->get_has_alpha
 					? 'rgba_8888'
 					: 'rgb_888',
@@ -99,7 +135,6 @@ sub setup_actors {
 
 			$page_group->set_position( 0, 0 ) ;
 			$page_group->set_size( $surface->get_width, $surface->get_height ) ;
-			$page_group->set_property( 'background-color', Clutter::Color->new(255, 0, 0, 255) );
 
 			$page_group->set_content( $clutter_image );
 		}
@@ -123,6 +158,8 @@ sub setup_actors {
 				my $rect_actor = Clutter::Actor->new;
 				$rect_actor->set_position(   $x1,       $y1 );
 				$rect_actor->set_size( $x2 - $x1, $y2 - $y1 );
+
+				$rect_actor->set_property( 'background-color', Clutter::Color->new(255, 255, 0, 50) );
 
 				$text_span_group->add_child( $rect_actor );
 			}
