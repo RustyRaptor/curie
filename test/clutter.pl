@@ -192,16 +192,31 @@ package ClutterEmbedScrollable {
 
 		$self->add( $self->{_embed} );
 
-		$self->{_scroll_stage}->signal_connect( 'notify::allocation' => sub {
+		my $update_adjustments = sub {
 			my $scroll = $self->{_scroll_stage};
 			my ($width, $height) = $scroll->get_size;
 
+			my $stage = $self->{_embed}->get_stage;
+			my ($pg_width, $pg_height) = $stage->get_size;
+
 			$self->get_hadjustment->set_lower(0);
+			$self->get_hadjustment->set_page_size($pg_width);
 			$self->get_hadjustment->set_upper($width);
 
 			$self->get_vadjustment->set_lower(0);
+			$self->get_hadjustment->set_page_size($pg_height);
 			$self->get_vadjustment->set_upper($height);
-		});
+
+			return FALSE;
+		};
+
+		$self->{_scroll_stage}->signal_connect(
+			'notify::allocation' => $update_adjustments,
+		);
+
+		$self->{_embed}->signal_connect(
+			'configure-event' => $update_adjustments,
+		);
 
 		$self;
 	}
