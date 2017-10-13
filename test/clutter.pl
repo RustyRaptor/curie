@@ -8,6 +8,7 @@ use Gtk3;
 use Clutter;
 use Glib::Object::Introspection;
 
+use Renard::Incunabula::Common::Setup;
 use Data::DPath qw(dpathi);
 use Renard::Incunabula::Format::PDF::Document;
 use Renard::Incunabula::Devel::TestHelper;
@@ -46,8 +47,9 @@ sub main {
 	$scrolled_win->show;
 	$window->add($scrolled_win);
 
-	my $embed = Gtk3::Clutter::Embed->new;
+	my $embed = ClutterEmbedScrollable->new;
 	$scrolled_win->add( $embed );
+	$embed->_setup_adjustments;
 
 	my $doc = Renard::Incunabula::Format::PDF::Document->new(
 		filename => Renard::Incunabula::Devel::TestHelper
@@ -59,43 +61,11 @@ sub main {
 
 	my $stage = $embed->get_stage;
 	$pages_group->set_property( 'background-color', Clutter::Color->new(0, 255, 0, 255) );
-	my $scroll_actor = Clutter::ScrollActor->new;
-	$scroll_actor->signal_connect( 'notify::allocation' => sub {
-		use DDP; &p( [ $scroll_actor->get_size ] );
-		my ($width, $height) = $scroll_actor->get_size;
 
-		$scrolled_win->get_hadjustment->set_lower(0);
-		$scrolled_win->get_hadjustment->set_upper($width);
-
-		$scrolled_win->get_vadjustment->set_lower(0);
-		$scrolled_win->get_vadjustment->set_upper($height);
-	});
-
-	$scroll_actor->add_child( $pages_group );
-
-	$stage->add_child( $scroll_actor );
-
-	$stage->set_content_gravity('top');
-
-	#$stage->add_child( Clutter::Text->new_with_text("Sans 24", "A bit of text") );
+	$stage->add_child( $pages_group );
+	#$stage->set_content_gravity('top');
 
 	$window->show_all;
-
-	#require Carp::REPL; Carp::REPL->import('repl'); repl();#DEBUG
-	#Glib::Timeout->add(1000, sub {
-		#use DDP; &p( [ $stage->get_size ] );
-		#use DDP; &p( [ $scroll_actor->get_size ] );
-		#use DDP; &p( [ $pages_group->get_size ] );
-	#});
-
-	Glib::Timeout->add(1000, sub {
-		my @adj = ( $scrolled_win->get_hadjustment, $scrolled_win->get_vadjustment );
-		for my $adj (@adj) {
-			say sprintf("[ %f, %f ]", $adj->get_lower, $adj->get_upper);
-		}
-
-		return TRUE;
-	});
 
 	Gtk3::main;
 }
@@ -109,7 +79,7 @@ sub setup_actors {
 	my $pages_group = Clutter::Actor->new;
 	$pages_group->set_layout_manager( $grid_layout );
 
-	for my $page_number (1..10) {
+	for my $page_number (1..20) {
 		my $render_group = Clutter::Actor->new;
 
 		my $page_group = Clutter::Actor->new;
@@ -176,3 +146,87 @@ sub setup_actors {
 }
 
 main;
+
+package ClutterEmbedScrollable {
+	use Renard::Incunabula::Common::Setup;
+	use Glib qw(TRUE FALSE);
+
+	use Glib::Object::Subclass
+		'Gtk3::Bin',
+		interfaces => [ qw(Gtk3::Scrollable) ],
+		properties => [
+			Glib::ParamSpec->enum('vscroll-policy',
+				'vertical scroll policy',
+				'See GtkScrollable property',
+				'Gtk3::ScrollablePolicy',
+				'minimum',
+				[qw/readable writable/]),
+			Glib::ParamSpec->object('vadjustment',
+				'vertical adjustment',
+				'See GtkScrollable property',
+				'Gtk3::Adjustment',
+				[qw/readable writable construct/]),
+			Glib::ParamSpec->enum('hscroll-policy',
+				'horizontal scroll policy',
+				'See GtkScrollable property',
+				'Gtk3::ScrollablePolicy',
+				'minimum',
+				[qw/readable writable/]),
+			Glib::ParamSpec->object('hadjustment',
+				'horizontal adjustment',
+				'See GtkScrollable property',
+				'Gtk3::Adjustment',
+				[qw/readable writable construct/]),
+		]
+		;
+
+	fun new($class) {
+		my $self = $class->SUPER::new();
+		bless $self, $class;
+
+		$self->{_embed} = Gtk3::Clutter::Embed->new;
+
+		my $stage = $self->{_embed}->get_stage;
+		$self->{_scroll_stage} = Clutter::ScrollActor->new;
+		$stage->add_child( $self->{_scroll_stage} );
+
+		$self->add( $self->{_embed} );
+
+		$self->{_scroll_stage}->signal_connect( 'notify::allocation' => sub {
+			my $scroll = $self->{_scroll_stage};
+			my ($width, $height) = $scroll->get_size;
+
+			$self->get_hadjustment->set_lower(0);
+			$self->get_hadjustment->set_upper($width);
+
+			$self->get_vadjustment->set_lower(0);
+			$self->get_vadjustment->set_upper($height);
+		});
+
+		$self;
+	}
+
+	method _setup_adjustments() {
+		my $scroll_cb = sub {
+			my $point = Clutter::Point->new(
+				x => $self->get_hadjustment->get_value,
+				y => $self->get_vadjustment->get_value,
+			);
+
+			$self->{_scroll_stage}->scroll_to_point( $point );
+		};
+
+		for my $adj ($self->get_hadjustment, $self->get_vadjustment) {
+			$adj->signal_connect( 'value-changed' => $scroll_cb );
+		}
+	}
+
+	method get_stage() {
+		$self->{_scroll_stage};
+	}
+
+	method GET_BORDER() {
+		my $border = Gtk3::Border->new;
+		return (FALSE, $border);
+	}
+}
