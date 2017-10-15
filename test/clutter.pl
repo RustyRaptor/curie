@@ -29,6 +29,32 @@ sub text_click_handler {
 }
 
 sub main {
+	#clutter_main();
+	clutter_gtk_main();
+}
+
+sub clutter_main {
+	Clutter::init;
+
+	my $doc = Renard::Incunabula::Format::PDF::Document->new(
+		filename => Renard::Incunabula::Devel::TestHelper
+			->test_data_directory
+			->child(qw(PDF Adobe pdf_reference_1-7.pdf)),
+	);
+
+	my $pages_group = setup_actors($doc);
+
+	my $stage = Clutter::Stage->new;
+	$stage->add_child( $pages_group );
+
+	$stage->signal_connect( destroy => sub { Clutter::main_quit } );
+
+	$stage->show;
+
+	Clutter::main;
+}
+
+sub clutter_gtk_main {
 	Glib::Object::Introspection->setup(
 		basename => 'GtkClutter',
 		version => '1.0',
