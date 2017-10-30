@@ -108,11 +108,11 @@ sub main {
 			} $canvas->get_root_item;
 			use DDP; p $area_items_children[-1];
 
-			my @at_items = map { $_->get_model } $canvas->get_items_at(
+			my @at_items = map { $_->get_model // $_ } $canvas->get_items_at(
 				$button->x, $button->y,
 				FALSE,
 			);
-			my @area_items = map { $_->get_model } $canvas->get_items_in_area(
+			my @area_items = map { $_->get_model // $_ } $canvas->get_items_in_area(
 				GooCanvas2::CanvasBounds->new(
 					x1 => $button->x,
 					x2 => $button->x,
@@ -140,7 +140,7 @@ sub main {
 		#exit 0;
 	#});
 
-	my $root = GooCanvas2::CanvasGroupModel->new;
+	my $root = GooCanvas2::CanvasGroup->new;
 
 	my $doc = Renard::Incunabula::Format::PDF::Document->new(
 		filename => Renard::Incunabula::Devel::TestHelper
@@ -149,52 +149,52 @@ sub main {
 	);
 
 
-	my $table_model = GooCanvas2::CanvasTableModel->new(
-		parent => $root,
+	my $table = GooCanvas2::CanvasTable->new(
 		'column-spacing' => 10,
 		'row-spacing' => 10,
 	);
 
 	my $add_child_to_row_column = sub {
-		my ($table_model, $child_item, $row, $column) = @_;
-		$table_model->add_child($child_item, -1 );
-		$table_model->set_child_property($child_item, 'row', $row );
-		$table_model->set_child_property($child_item, 'column', $column);
+		my ($table, $child_item, $row, $column) = @_;
+		$table->add_child($child_item, -1 );
+		$table->set_child_property($child_item, 'row', $row );
+		$table->set_child_property($child_item, 'column', $column);
 	};
 
 	for my $page_number (1..4) {
-		my $group_model = GooCanvas2::CanvasTableModel->new;
-		my $pirm = PageImageRenderModel->new( doc => $doc, page => $page_number );
-		my $ptrm = PageTextRenderModel->new( doc => $doc, page => $page_number );
+		my $group = GooCanvas2::CanvasTable->new;
+		my $pir = PageImageRender->new( doc => $doc, page => $page_number );
+		#my $ptr = PageTextRender->new( doc => $doc, page => $page_number );
 
-		$group_model->add_child( $pirm->item_model, -1 );
-		$group_model->add_child( $ptrm->item_model, -1 );
+		$group->add_child( $pir->item, -1 );
+		#$group->add_child( $ptr->item, -1 );
 
-		$layers->[$page_number]{image} = $pirm;
-		$layers->[$page_number]{text} = $ptrm;
+		$layers->[$page_number]{image} = $pir;
+		#$layers->[$page_number]{text} = $ptr;
 
-		$table_model->$add_child_to_row_column($group_model,
+		$table->$add_child_to_row_column($group,
 			int(($page_number-1) / 2), ($page_number-1) % 2);
 	}
 
-	$canvas->set_root_item_model($root);
+	$root->add_child($table, -1);
+	$canvas->set_root_item($root);
 	$canvas->set_property( 'has-tooltip' => TRUE );
 
-	my $bounds_update = sub {
-		my ($item) = @_;
+	#my $bounds_update = sub {
+		#my ($item) = @_;
 
-		my $new_bounds = GooCanvas2::CanvasBounds->new;
-		$item->update(TRUE, $canvas->create_cairo_context, $new_bounds);
+		#my $new_bounds = GooCanvas2::CanvasBounds->new;
+		#$item->update(TRUE, $canvas->create_cairo_context, $new_bounds);
 
-		if( $item->can('get_n_children') ) {
-			for my $cn (0..$item->get_n_children-1) {
-				my $child = $item->get_child($cn);
-				__SUB__->($child);
-			}
-		}
-	};
+		#if( $item->can('get_n_children') ) {
+			#for my $cn (0..$item->get_n_children-1) {
+				#my $child = $item->get_child($cn);
+				#__SUB__->($child);
+			#}
+		#}
+	#};
 
-	$bounds_update->($canvas->get_root_item);
+	#$bounds_update->($canvas->get_root_item);
 
 	my $bs = sub {
 		my ($bounds) = @_;
@@ -203,12 +203,13 @@ sub main {
 	for my $layer (@$layers) {
 		next unless $layer;
 
-		my $tml = $layer->{text}->item_model;
-		say "Page number: ",  $layer->{text}->page;
+		#my $tml = $layer->{text}->item_model;
+		#say "Page number: ",  $layer->{text}->page;
 
-		my $til = $canvas->get_item($tml);
+		#my $til = $layer->{text}->item;
+		#my $til = $canvas->get_item($tml);
 
-		say "Before: ", $til->get_bounds->$bs();
+		#say "Before: ", $til->get_bounds->$bs();
 		#my $new_bounds = GooCanvas2::CanvasBounds->new;
 		#$til->update(TRUE, $canvas->create_cairo_context, $new_bounds);
 		#say "After ", $til->get_bounds->$bs();
@@ -249,13 +250,13 @@ sub main {
 	return 0;
 }
 
-package AsGooCanvasItemModel {
+package AsGooCanvasItem {
 	use Moo::Role;
 
-	requires 'item_model';
+	requires 'item';
 }
 
-package RenderModelRole {
+package RenderRole {
 	use Moo::Role;
 
 	has [qw(doc page)] => (
@@ -264,12 +265,12 @@ package RenderModelRole {
 	);
 }
 
-package PageImageRenderModel {
+package PageImageRender {
 	use Moo;
 	use MooX::Lsub;
 	use Function::Parameters;
 
-	lsub _image_model_for_page => method() {
+	lsub _image_for_page => method() {
 		my $doc = $self->doc;
 		my $page_number = $self->page;
 
@@ -282,44 +283,44 @@ package PageImageRenderModel {
 			$surface->get_width, $surface->get_height,
 		);
 
-		my $image_model = GooCanvas2::CanvasImageModel->new(
+		my $image = GooCanvas2::CanvasImage->new(
 			width => $page->width,
 			height => $page->height,
 			pixbuf => $pixbuf,
 		);
 
-		$image_model;
+		$image;
 	};
 
-	lsub item_model => method() {
-		my $page_layer =  GooCanvas2::CanvasTableModel->new;
+	lsub item => method() {
+		my $page_layer =  GooCanvas2::CanvasTable->new;
 
 		my $doc = $self->doc;
 		my $page_number = $self->page;
 
-		$page_layer->set('width', $self->_image_model_for_page->get('width'));
-		$page_layer->set('height', $self->_image_model_for_page->get('height'));
+		$page_layer->set('width', $self->_image_for_page->get('width'));
+		$page_layer->set('height', $self->_image_for_page->get('height'));
 
-		$page_layer->add_child( $self->_image_model_for_page, 0 );
+		$page_layer->add_child( $self->_image_for_page, 0 );
 		say $page_layer->get('height');
 		say $page_layer->get('width');
 
 		$page_layer;
 	};
 
-	with qw(RenderModelRole AsGooCanvasItemModel);
+	with qw(RenderRole AsGooCanvasItem);
 }
 
-package PageTextRenderModel {
+package PageTextRender {
 	use Moo;
 	use MooX::Lsub;
 	use Function::Parameters;
 	use Data::DPath qw(dpathi);
 
-	lsub item_model => method() {
+	lsub item => method() {
 		my $page = $self->doc->get_rendered_page( page_number => $self->page );
 
-		my $text_layer = GooCanvas2::CanvasGroupModel->new;
+		my $text_layer = GooCanvas2::CanvasGroup->new;
 		$text_layer->set('width', $page->width);
 		$text_layer->set('height', $page->height);
 
@@ -340,19 +341,19 @@ package PageTextRenderModel {
 			my $text = join '', map { $_->{c} } @{ $deref->{char} };
 			my $font = join " ", ($deref->{font}); # , $deref->{size}
 
-			my $text_model_as_text = GooCanvas2::CanvasTextModel->new(
-				text => $text,
-				font => $font,
+			#my $text_as_text = GooCanvas2::CanvasText->new(
+				#text => $text,
+				#font => $font,
 
-				x => $x1, y => $y1,
-				width => $x2 - $x1,
-				height => -1,
+				#x => $x1, y => $y1,
+				#width => $x2 - $x1,
+				#height => -1,
 
-				tooltip => 'Something or other',
-				'fill-color' => 'blue',
-			);
+				#tooltip => 'Something or other',
+				#'fill-color' => 'blue',
+			#);
 
-			my $text_model_as_rect = GooCanvas2::CanvasRectModel->new(
+			my $text_as_rect = GooCanvas2::CanvasRect->new(
 				x => $x1, y => $y1,
 				width => $x2 - $x1,
 				height => $y2 - $y1,
@@ -362,13 +363,13 @@ package PageTextRenderModel {
 				'fill-color-gdk-rgba' => Gtk3::Gdk::RGBA->new(1,1,0,0.25),
 			);
 
-			my $text_model = $text_model_as_rect;
+			my $text_item = $text_as_rect;
 
 
-			$text_model->{_s} = $value;
-			$text_model->{_t} = $text;
+			$text_item->{_s} = $value;
+			$text_item->{_t} = $text;
 
-			$text_layer->add_child( $text_model, 0 );
+			$text_layer->add_child( $text_item, 0 );
 
 			#$text_concat .= $value->{c};
 			#$text_concat .= $value->{bbox};
@@ -380,7 +381,7 @@ package PageTextRenderModel {
 		$text_layer;
 	};
 
-	with qw(RenderModelRole AsGooCanvasItemModel);
+	with qw(RenderRole AsGooCanvasItem);
 }
 
 main;
