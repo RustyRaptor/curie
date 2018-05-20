@@ -14,7 +14,21 @@ use Moo 2.001001;
 use MooX::Role::Logger ();
 use MooX::Lsub;
 
-use Renard::Incunabula::Common::Types qw(InstanceOf Path Str DocumentModel);
+use Renard::Incunabula::Common::Types qw(InstanceOf Path Str);
+use Renard::Incunabula::Document::Types qw(DocumentModel);
+
+use IO::Async::Loop::Glib;
+
+=attr loop
+
+Glib event loop.
+
+=cut
+has loop => ( is => 'lazy' );
+
+sub _build_loop {
+	IO::Async::Loop::Glib->new;
+}
 
 =attr window
 
@@ -110,6 +124,7 @@ with qw(
 	Renard::Curie::Component::MainWindow::Role::AccelMap
 	Renard::Curie::Component::MainWindow::Role::MenuBar
 	Renard::Curie::Component::MainWindow::Role::Outline
+	Renard::Curie::Component::MainWindow::Role::TTSWindow
 	Renard::Curie::Component::MainWindow::Role::ExceptionHandler
 );
 
